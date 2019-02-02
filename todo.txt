@@ -1,0 +1,16 @@
+same upgrade, different text
+
+add to grammars
+
+upgrades:
+bomb?
+sharpshooter
+hpmax upgrade (increases size?)
+no pursuit next sector
+
+change smartbomb to replace shield
+
+implement enemy timers
+
+retry
+main menu

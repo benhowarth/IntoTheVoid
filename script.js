@@ -49,11 +49,33 @@ if(is_touch_device()){
   movementKeys["a"]={active:false,onActive:function(){p.vel.x-=speedVec.x;}}
   movementKeys["d"]={active:false,onActive:function(){p.vel.x+=speedVec.x;}}
 
+  movementKeysToUpgrades=[]
+  movementKeysToUpgrades["w"]=0
+  movementKeysToUpgrades["a"]=2
+  movementKeysToUpgrades["s"]=3
+  movementKeysToUpgrades["d"]=1
+
   document.addEventListener("keydown",function(e){
     //console.log(e.key);
     if(movementKeys[e.key]!=null){
       //alert(e.key)
-      movementKeys[e.key].active=true
+      if(inControl && !inPub){
+        movementKeys[e.key].active=true
+      }else{
+          //check all other movement keys are up
+          movementKeysAllUp=true
+          for(var mK in movementKeys){
+            //if(mK!=e.key){
+              if(movementKeys[mK].active){movementKeysAllUp=false;}
+            //}
+          }
+
+          if(movementKeysAllUp){
+            getUpgrade(movementKeysToUpgrades[e.key])
+          }
+
+
+      }
     }
   });
   document.addEventListener("keyup",function(e){
@@ -188,6 +210,7 @@ function setup(){
 	//hpMax=100000
 	hp=hpMax
 	dead=false
+  deadKeyHoldTimer=50
 	rectMode(CENTER)
 	time=0
 	spawnInterval=50
@@ -282,8 +305,9 @@ function draw(){
 fullDir=m.clone().subtract(touchStart).multiply(Victor(velDampening,velDampening))
 dir=fullDir.clone().norm()
 
-	if(touching && fullDir.length()>0 &&inControl){
-		if(time%trailInterval==0){
+	//if(touching && fullDir.length()>0 &&inControl){
+  if(p.vel.length()>1 &&inControl){
+    if(time%trailInterval==0){
 
 			//alert(trails.length)
 			trailPos=p.pos.clone()
@@ -291,6 +315,8 @@ dir=fullDir.clone().norm()
 			trailPos.y=trailPos.y-sin(pAng)*8
 			newTrail(trailPos)
 		}
+  }
+    if(touching && fullDir.length()>0 &&inControl){
 		//speedVec=Victor(speed/fullDir.length,speed/fullDir.length)
 		speedVec=Victor(speed,speed)
 			//p.vel=dir.multiply(speedVec);
@@ -403,8 +429,9 @@ dir=fullDir.clone().norm()
 
 
 	translate(p.pos.x,p.pos.y)
-	if(inControl){pAng=dir.angle()}
-	rotate(pAng)
+	//if(inControl){pAng=dir.angle()}
+  pAng=p.vel.angle()
+  rotate(pAng)
 	rect(0,0,15,10)
 	if(crashteroidActive){
 		fill(255,150,150,150)
@@ -581,10 +608,19 @@ dir=fullDir.clone().norm()
     }
 		text(pubText,10,10,width-20,optionsY-10)
 
+    keyBorderBuffer=30
+
 		text(upgrades[0].displayText,gapX,optionsY+gapY,boxSize,boxSize)
+    text("w",gapX+boxSize-keyBorderBuffer,optionsY+gapY+boxSize-keyBorderBuffer,boxSize,boxSize)
+
 		text(upgrades[1].displayText,boxSize+gapX*2,optionsY+gapY,boxSize,boxSize)
+		text("d",boxSize+gapX*2+boxSize-keyBorderBuffer,optionsY+gapY+boxSize-keyBorderBuffer,boxSize,boxSize)
+
 		text(upgrades[2].displayText,gapX,optionsY+boxSize+gapY*2,boxSize,boxSize)
-		text(upgrades[3].displayText,boxSize+gapX*2,optionsY+boxSize+gapY*2,boxSize,boxSize)
+    text("a",gapX+boxSize-keyBorderBuffer,optionsY+boxSize+gapY*2+boxSize-keyBorderBuffer,boxSize,boxSize)
+
+    text(upgrades[3].displayText,boxSize+gapX*2,optionsY+boxSize+gapY*2,boxSize,boxSize)
+    text("s",boxSize+gapX*2+boxSize-keyBorderBuffer,optionsY+boxSize+gapY*2+boxSize-keyBorderBuffer,boxSize,boxSize)
 
 
 		//check options for click
@@ -627,7 +663,12 @@ dir=fullDir.clone().norm()
 		//textAlign(CENTER)
 		text("GAME OVER",10,height/2,width,height)
 
-  	text("TAP TO RETRY",10,50+height/2,width,height)
+    if(touchDevice){
+      retryString="TAP TO RETRY"
+    }else{
+      retryString="CLICK OR HOLD ANY KEY TO RETRY"
+    }
+  	text(retryString,10,50+height/2,width,height)
 
 
     if(touching){
@@ -636,6 +677,13 @@ dir=fullDir.clone().norm()
       }
     }else{
       gameOverFingerUp=true
+      if(keyIsPressed === true){
+        if(deadKeyHoldTimer<=0){
+          document.location.reload(false)
+        }else{
+          deadKeyHoldTimer--;
+        }
+      }
     }
 	}
 

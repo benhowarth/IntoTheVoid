@@ -1,4 +1,4 @@
-window.onerror = function(msg, url, linenumber) { alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber); return true; }
+//window.onerror = function(msg, url, linenumber) { alert('Error message: '+msg+'\nURL: '+url+'\nLine Number: '+linenumber); return true; }
 
 
 grammarVar={
@@ -19,7 +19,8 @@ grammarVar={
 	shield:["you get a shield","you have a shield"],
 	smartbomb:["you get a smartbomb"],
 	speed:["a mechanic offers to work on your engine"],
-	skip:["#someone# offers you a hyperlight tow"]
+	skip:["#someone# offers you a hyperlight tow"],
+	pursueWarning:["You notice a federation guard and they see you."]
 }
 
 

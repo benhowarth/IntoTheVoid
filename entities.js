@@ -1,7 +1,8 @@
 
 p={
 	pos:Victor(0,0),
-	vel:Victor(0,0)
+	vel:Victor(0,0),
+  r:15
 	};
 
 obs=[]
@@ -61,13 +62,13 @@ class Enemy{
           ellipse(0,0,this.r,this.r)
       }
 
-			rotate(-this.toPlayer.angle())
-	translate(-this.pos.x,-this.pos.y)
+		rotate(-this.toPlayer.angle())
+	  translate(-this.pos.x,-this.pos.y)
 
 		stroke(255,0,0)
 		noFill()
-	rectMode(CORNER)
-rect(this.pos.x-10,this.pos.y-20,20,5)
+    rectMode(CORNER)
+    rect(this.pos.x-10,this.pos.y-20,20,5)
 
 		noStroke()
 		fill(255,0,0)

@@ -206,6 +206,8 @@ function setup(){
 	shootTimer=shootTimerMax
 
 
+  hpMaxMax=1000
+  hpMaxIncrement=100
 	hpMax=100
 	//hpMax=100000
 	hp=hpMax
@@ -218,7 +220,7 @@ function setup(){
 	velDampening=0.07;
 	trailAgeMax=35;
 	trailSizeMax=15;
-	trailInterval=3;
+	trailInterval=1;
 
 
 	sector=0;
@@ -356,7 +358,7 @@ dir=fullDir.clone().norm()
 	 }
 
 	 	  }
-	 	}	if(collideCircleCircle(p.pos.x,p.pos.y,15,ob.pos.x,ob.pos.y,ob.r)){
+	 	}	if(collideCircleCircle(p.pos.x,p.pos.y,p.r,ob.pos.x,ob.pos.y,ob.r)){
 	 	fill(255,0,0)
 	 	if(smartbombActive){
 
@@ -432,7 +434,7 @@ dir=fullDir.clone().norm()
 	//if(inControl){pAng=dir.angle()}
   pAng=p.vel.angle()
   rotate(pAng)
-	rect(0,0,15,10)
+	rect(0,0,p.r,p.r*0.6)
 	if(crashteroidActive){
 		fill(255,150,150,150)
 		ellipse(0,0,crashteroidRad,crashteroidRad)
@@ -543,7 +545,9 @@ dir=fullDir.clone().norm()
 			}
 			if(pubY<height/2 && p.pos.y<pubY){
 					p.pos.y++
-			}
+			}else if(p.pos.y>pubY){
+        p.pos.y--
+      }
 		}
 	}
 	}
@@ -611,16 +615,18 @@ dir=fullDir.clone().norm()
     keyBorderBuffer=30
 
 		text(upgrades[0].displayText,gapX,optionsY+gapY,boxSize,boxSize)
-    text("w",gapX+boxSize-keyBorderBuffer,optionsY+gapY+boxSize-keyBorderBuffer,boxSize,boxSize)
-
 		text(upgrades[1].displayText,boxSize+gapX*2,optionsY+gapY,boxSize,boxSize)
-		text("d",boxSize+gapX*2+boxSize-keyBorderBuffer,optionsY+gapY+boxSize-keyBorderBuffer,boxSize,boxSize)
-
 		text(upgrades[2].displayText,gapX,optionsY+boxSize+gapY*2,boxSize,boxSize)
-    text("a",gapX+boxSize-keyBorderBuffer,optionsY+boxSize+gapY*2+boxSize-keyBorderBuffer,boxSize,boxSize)
-
     text(upgrades[3].displayText,boxSize+gapX*2,optionsY+boxSize+gapY*2,boxSize,boxSize)
-    text("s",boxSize+gapX*2+boxSize-keyBorderBuffer,optionsY+boxSize+gapY*2+boxSize-keyBorderBuffer,boxSize,boxSize)
+
+
+
+    if(!touchDevice){
+      text("w",gapX+boxSize-keyBorderBuffer,optionsY+gapY+boxSize-keyBorderBuffer,boxSize,boxSize)
+  		text("d",boxSize+gapX*2+boxSize-keyBorderBuffer,optionsY+gapY+boxSize-keyBorderBuffer,boxSize,boxSize)
+      text("a",gapX+boxSize-keyBorderBuffer,optionsY+boxSize+gapY*2+boxSize-keyBorderBuffer,boxSize,boxSize)
+      text("s",boxSize+gapX*2+boxSize-keyBorderBuffer,optionsY+boxSize+gapY*2+boxSize-keyBorderBuffer,boxSize,boxSize)
+    }
 
 
 		//check options for click

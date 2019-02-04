@@ -1,16 +1,25 @@
-same upgrade, different text
+same upgrade, different text x
 
 add to grammars
 
 upgrades:
 bomb?
-sharpshooter
-hpmax upgrade (increases size?)
+sharpshooter x
+hpmax upgrade x (increases size?)
 no pursuit next sector
+no pursuit if skip?
 
 change smartbomb to replace shield
 
 implement enemy timers
 
-retry
+scale enemy timer and asteroid timer with level
+
+different asteroid patterns (with color of bg??)
+
+retry x
 main menu
+
+
+fix no shader bg on mobile
+fix pub name in front of ui on mobile

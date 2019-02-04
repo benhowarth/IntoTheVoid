@@ -38,10 +38,16 @@ function(){
 	hp=hpMax
 });
 
+newPossibleUpgrade("hpMax","#hpMax# (+max hp)",
+function(){
+	hpMax+=hpMaxIncrement
+});
+
+
 newPossibleUpgrade("skip","#skip# (+move to next sector)",
 function(){
 	sector++;
-	pursuedInSector=false;
+	//pursuedInSector=false;
 });
 
 newPossibleUpgrade("crash","#crash# (+enemies crash when near you)",
@@ -87,8 +93,12 @@ function refreshUpgrades(){
 		upgradesToChoose=["repair","skip"]
 
 
+		if(sector>2 && hpMax+hpMaxIncrement<=hpMaxMax){
+				upgradesToChoose.push("hpMax")
+		}
 
-		if(sector>1 && !shieldActive){
+
+		if(sector>1){
 			upgradesToChoose.push("shield")
 		}
 		if(sector>2 && speed+speedIncrement<=speedMax){
@@ -128,16 +138,19 @@ function refreshUpgrades(){
 			if(upgradeChoice!="repair"){
 				upgradesToChoose.splice(upgradeIndex,1)
 			}
-
-			upgrades.push(possibleUpgrades[upgradeChoice])
+			let up=possibleUpgrades[upgradeChoice]
+			up.scrambleText()
+			upgrades.push({displayText:up.getText(),upgradeRefIndex:upgradeChoice})
 		}
 
 
-
+		/*
 		for(u=0;u<upgrades.length;u++){
 			 upgrades[u].scrambleText()
 			 upgrades[u].displayText=upgrades[u].getText()
 		}
+		*/
+
 
 		//decide next sector stuff
 		pursuedInSector=false
@@ -148,12 +161,14 @@ function refreshUpgrades(){
 }
 
 function getUpgrade(id){
-	upgrades[id].func()
-	sector++
-	sectorTimer=sectorTimerMax
-	p.vel=Victor(-10,0)
-	inControl=true
-	inPub=false
+	if(upgrades[id]!=null && possibleUpgrades[upgrades[id].upgradeRefIndex]!=null){
+		possibleUpgrades[upgrades[id].upgradeRefIndex].func()
+		sector++
+		sectorTimer=sectorTimerMax
+		p.vel=Victor(-10,0)
+		inControl=true
+		inPub=false
+	}
 
 }
 

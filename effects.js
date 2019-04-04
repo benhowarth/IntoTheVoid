@@ -23,11 +23,11 @@ function newExplosion(_pos,_size){
 		age:0,
 		size:_size,
 		fill:color(255,100,100)
-	}
-	)
+	})
 }
 
 function newExplosionCluster(_pos,_size){
+	explosionSFX.play()
 	clusterNo=(Math.random()*explosionClusterMaxNo)+1
 	clusterNo=explosionClusterMaxNo
 	for(ec=0;ec<clusterNo;ec++){

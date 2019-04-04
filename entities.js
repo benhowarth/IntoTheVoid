@@ -1,4 +1,3 @@
-
 p={
 	pos:Victor(0,0),
 	vel:Victor(0,0),
@@ -17,13 +16,32 @@ function newOb(_pos,_vel,_r){
 }
 asteroidSpeed=10
 function newAsteroid(){
-	obR=math.random(10,30)
+	//obR=math.random(10,30)
+  obDifficulty=Math.min(sector,50)/50
+  obR=math.random(10,10+(60*obDifficulty))
+  obSpeedVec=Victor(math.random(10,10+(20*obDifficulty)),math.random(10,10+(20*obDifficulty)))
+  obXSpawnRange=obDifficulty*width/2
+  //console.log(obDifficulty)
+
+  obX=math.random(0,obXSpawnRange)
+  if(math.random()>0.5){
+    obX=math.random(width-obXSpawnRange,width)
+  }
+
+  obPos=Victor(obX,0)
+  normalToCenter=p.pos.clone().subtract(obPos).norm()
+  obVel=normalToCenter.clone().multiply(obSpeedVec)
+
+  /*
   obPos=Victor(0,0)
   obVel=Victor(math.random(asteroidSpeed/10,asteroidSpeed),math.random(asteroidSpeed/10,asteroidSpeed))
 	if(math.random()>0.5){
 			obPos=Victor(width,0)
 			obVel=Victor(math.random(-asteroidSpeed,-asteroidSpeed/2),math.random(asteroidSpeed/10,asteroidSpeed))
 		}
+
+    */
+
 	newOb(obPos,obVel,obR)
 }
 
@@ -48,6 +66,7 @@ class Enemy{
 		rectMode(CENTER)
 		fill(255,0,0)
 	if(this.pos.y>height){
+		warningSFX.play()
 		rect(this.pos.x,height-30,this.r*sin(time*0.3),this.r*sin(time*0.3))
 	}else{
 			//ellipse(this.pos.x,this.pos.y,this.r,this.r)
@@ -94,9 +113,15 @@ class Enemy{
 
 		this.toPlayer=this.tpos.clone().subtract(this.pos)
 
-		if(this.toPlayer.length()>this.minDist || this.crashteroid){	this.vel=this.toPlayer.norm().multiply(this.followSpeed)
+		if(this.toPlayer.length()>this.minDist || this.crashteroid){
+
+        if(this.crashteroid){
+          this.vel=this.toPlayer.norm().multiply(this.followSpeed.clone().multiply(Victor(6,6)))
+        }else{
+          this.vel=this.toPlayer.norm().multiply(this.followSpeed)
+        }
 		}else{
-			this.vel=this.vel.multiply(Victor(0.6,0.6))
+        this.vel=this.vel.multiply(Victor(0.6,0.6))
 		}
 	}else{
 		//this.vel.multiplyX(0.5);
@@ -110,8 +135,17 @@ class Enemy{
 	}
 }
 
-
+function checkIfEndBattleMusic(){
+	if(enemies.length==0 || dead){
+		battleBG1SFX.setVolume(0.0,2)
+		battleBG1SFX.stop(2.1)
+	}
+}
 
 function newEnemy(){
 	enemies.push(new Enemy(Victor(2,1)))
+	if(enemies.length==1){
+		battleBG1SFX.setVolume(0.4,2)
+		battleBG1SFX.loop()
+	}
 }

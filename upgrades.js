@@ -1,4 +1,3 @@
-
 upgrades=[]
 class Upgrade{
 	constructor(text,func){
@@ -154,10 +153,16 @@ function refreshUpgrades(){
 
 		//decide next sector stuff
 		pursuedInSector=false
-		if(Math.random()>0.5){
+		let difficulty=Math.min(sector,50)/50
+		if(Math.random()<0.2+(difficulty*0.8)){
 			pursuedInSector=true
 			pubText+=parseT(" #pursueWarning#")
 		}
+		spawnInterval=math.floor(spawnIntervalMax-(spawnIntervalMax*(Math.min(sector,50)/50)))
+		enemyMax=1+math.ceil(enemyMaxMax*(Math.min(sector,50)/50))
+		enemySpawnInterval=math.floor(enemySpawnIntervalMax-(enemySpawnIntervalMax*(Math.min(sector,50)/50)))
+		//pursuedInSector=true
+		//console.log("spawn interval now:"+spawnInterval)
 }
 
 function getUpgrade(id){
@@ -168,11 +173,15 @@ function getUpgrade(id){
 		p.vel=Victor(-10,0)
 		inControl=true
 		inPub=false
+		selectSFX.play()
+		pubBG1SFX.setVolume(0.0,2)
+		pubBG1SFX.stop(2.1)
 	}
 
 }
 
 function setOffSmartBomb(){
+	/*
 	for(k=0;k<obs.length;k++){
 		ob=obs[k]
 		//alert(JSON.stringify(ob))
@@ -185,6 +194,42 @@ function setOffSmartBomb(){
 		newExplosionCluster(enemy.pos,enemy.r*3)
 	}
 	enemies=[]
+	*/
 	smartbombActive=false
 	smartbombHappened=true
+	smartbombSFX.play()
+}
+
+function checkAndDrawSmartbombExplosion(){
+	let maxRad=Math.min(width,height)
+	if(smartbombRad<maxRad){
+		//console.log("smartbomb firing"+(smartbombRad/maxRad))
+		smartbombRad+=15
+		fill(0,255,0,150*(1-(smartbombRad/maxRad)))
+		ellipse(p.pos.x,p.pos.y,smartbombRad*2,smartbombRad*2)
+
+
+		for(k=0;k<obs.length;k++){
+			ob=obs[k]
+			if((ob.pos.clone().subtract(p.pos)).length()<smartbombRad){
+				newExplosionCluster(ob.pos,ob.r*3)
+				obs.splice(k,1)
+				k--
+			}
+		}
+
+		for(k=0;k<enemies.length;k++){
+			enemy=enemies[k]
+			if((enemy.pos.clone().subtract(p.pos)).length()<smartbombRad){
+				newExplosionCluster(enemy.pos,enemy.r*3)
+				enemies.splice(k,1)
+				k--
+			}
+		}
+
+	}else{
+		//console.log("smartBomb over")
+		smartbombRad=0
+		smartbombHappened=false
+	}
 }

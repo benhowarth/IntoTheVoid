@@ -59,7 +59,7 @@ if(is_touch_device()){
     //console.log(e.key);
     if(movementKeys[e.key]!=null){
       //alert(e.key)
-      if(inControl && !inPub){
+      if(inControl){
         movementKeys[e.key].active=true
       }else{
           //check all other movement keys are up
@@ -111,7 +111,7 @@ function preload(){
 	f1=loadFont("img/saved_by_zero.ttf")
   defaultShader=loadShader("img/defaultShader.vert","img/defaultShader.frag")
   starShader=loadShader("img/starShader.vert","img/starShader.frag")
-
+  ambientHumSFX=loadSound("img/Solar Phasing - Industrial Noises Ambient 1.wav")
 }
 
 pubY=-100
@@ -122,23 +122,24 @@ parallaxFactor=4
 function drawBG(){
 
 	//if(!dead && inControl){
-		if(pubY<height/2 || sectorTimer>0){
-	bgOffset+=bgMoveSpeed*(1-(p.pos.y/h))*parallaxFactor;
+	if(pubY<height/2 || sectorTimer>0){
+	     bgOffset+=bgMoveSpeed*(1-(p.pos.y/h))*parallaxFactor;
 	}
 	parallaxOffset=((p.pos.y/height)-0.5)*100
 	//blendMode(LIGHTEST)
 	yOffset=bgOffset%(bgPointRad)
 	yOffset=0
-
+  if(!touchDevice){
     bgDrawer.shader(starShader)
-  starShader.setUniform("bgOffset",bgOffset)
-  starShader.setUniform("resolution",[w,h])
-  starShader.setUniform("time",time*0.01)
+    starShader.setUniform("bgOffset",bgOffset)
+    starShader.setUniform("resolution",[w,h])
+    starShader.setUniform("time",time*0.01)
     bgDrawer.background(0);
   	bgDrawer.noStroke()
   	bgDrawer.rect(0,0,w,h)
 
     texture(bgDrawer)
+  }
     rect(w/2,h/2,w,h)
 
 
@@ -163,32 +164,57 @@ function setup(){
   h = screen.height * ratio;
   w=window.innerWidth;
   h=window.innerHeight;
-  createCanvas(w,h,WEBGL)
-  bgDrawer=createGraphics(w,h,WEBGL)
+  if(touchDevice){
+    createCanvas(w,h)
+  }else{
+    createCanvas(w,h,WEBGL)
+    cam=createCamera()
+    //camera(0,0,h,0,0,0,0,1,0)
+    camera()
+    cam.move(w/2,h/2,0)
+    bgDrawer=createGraphics(w,h,WEBGL)
 
-  cam=createCamera()
-  //camera(0,0,h,0,0,0,0,1,0)
-  camera()
-  cam.move(w/2,h/2,0)
+  }
 
 
   noSmooth()
 	p.pos=Victor(width/2,height/2)
+
+  pCosmetic={
+  	h:(10+(Math.random()*15)),
+    trailAgeMax:Math.floor(15+(Math.random()*40)),
+    trailSizeMax:Math.floor(15+(Math.random()*40)),
+    trailInterval:Math.floor(5+(Math.random()*5)),
+  	shipCol1:color(random(255),random(255),random(255)),
+  	shipCol2:color(random(255),random(255),random(255)),
+  	trailCol:color(random(255),random(255),random(255))
+  }
+  pCosmetic.w=pCosmetic.h*((Math.random()*0.4)+0.6)
+  p.r=Math.max(pCosmetic.w,pCosmetic.h)
+
+  //load highscore
+  highscore=parseInt(Cookies.get("highscore"))
+  if(isNaN(highscore)){highscore=0}
+  newHighscore=false
+
 	background(0);
 	frameRate(60);
-	speed=1;
-  speedMax=5;
+	//speed=1;
+  speed=(200)/(pCosmetic.h*pCosmetic.w)
+  console.log("speed",speed)
+  speedMax=3;
   speedIncrement=0.5;
   speedVec=Victor(speed,speed)
 	friction=0.97;
 	pDmg=5
 	smartbombActive=false
 	smartbombHappened=false
+  smartbombRad=0
 	shieldActive=false
 	crashteroidActive=false
-	crashteroidRad=20
+	crashteroidRad=60
   crashteroidRadIncrement=30
-  crashteroidRadMax=120
+  crashteroidRadMax=180
 	shootActive=false
 	shootTargetId=null
 	shootTargetIdOld=null
@@ -211,17 +237,24 @@ function setup(){
 	hpMax=100
 	//hpMax=100000
 	hp=hpMax
+  //bool for if currently dead
 	dead=false
+  //bool for one time onDeath stuff
+  died=false
   deadKeyHoldTimer=50
 	rectMode(CENTER)
 	time=0
-	spawnInterval=50
+  //spawnTimer=50
+  spawnIntervalMax=30
+	spawnInterval=spawnIntervalMax
+
+  enemyMaxMax=10
+  enemyMax=1
+  enemySpawnIntervalMax=100
+  enemySpawnInterval=enemySpawnIntervalMax
+
 	touchStart=p.pos.clone()
 	velDampening=0.07;
-	trailAgeMax=35;
-	trailSizeMax=15;
-	trailInterval=1;
-
 
 	sector=0;
 	sectorTimerMax=500
@@ -229,21 +262,56 @@ function setup(){
 	inControl=true
 	pubSpawned=false
 	inPub=false
+  pubBeamOn=true
 	pubName=parseT("#pubName#")
 
 	pursuedInSector=false
 
-	noiseScale=0.01
-noiseDetail(5,0.25)
 
+  //sound setup
 
+  soundFormats("wav")
+
+  trailSFX=loadSound("img/trail.wav")
+  trailSFX.playMode('sustain')
+  trailSFX.setVolume(0.3)
+
+  warningSFX=loadSound("img/warning.wav")
+  warningSFX.playMode('sustain')
+  warningSFX.setVolume(0.1)
+
+  shootSFX=loadSound("img/shoot.wav")
+  shootSFX.setVolume(0.6)
+  shootSFX.playMode('sustain')
+
+  explosionSFX=loadSound("img/explosion.wav")
+  explosionSFX.setVolume(0.3)
+  explosionSFX.playMode('sustain')
+
+  smartbombSFX=loadSound("img/smartbomb.wav")
+  smartbombSFX.setVolume(0.3)
+
+  selectSFX=loadSound("img/select.wav")
+  selectSFX.setVolume(0.4)
+
+  pubTractorBeamSFX=loadSound("img/254942__deatlev__beam.wav")
+  pubTractorBeamSFXMax=0.5
+
+  pubBG1SFX=loadSound("img/397569__gagehurley78__crowded-bar-ambient-loop.wav")
+  pubBG1SFX.setVolume(0.7)
+
+  battleBG1SFX=loadSound("img/battle.wav")
+  battleBG1SFX.setVolume(0.4)
+
+  //bg hum start
+  ambientHumSFX.loop()
 }
 function draw(){
 	textFont(f1)
   if(touchDevice){
      textSize(10)
   }else{
-    textSize(20)
+    textSize(14)
   }
 	rectMode(CENTER)
 	time+=1
@@ -253,29 +321,34 @@ function draw(){
 	}
 
 	if(sectorTimer>0){
-	if(/*pursuedInSector &&*/ enemies.length<4){
-		newEnemy()
-	}
-	if(time%spawnInterval==0){
-		newAsteroid()
-		if(spawnInterval>5){spawnInterval--}
-	}
-	if(pubSpawned){
-		pubY+=4
-		if(pubY>height+100){
-			pubSpawned=false
-			pubY=-100
-			pubName=parseT("#pubName#")
-		}
-	}
+    //if((time%enemySpawnInterval)==0){console.log("enemy should spawn",pursuedInSector,enemies.length,enemyMax,enemies.length<enemyMax)}
+  	if(pursuedInSector && enemies.length<enemyMax && (time%enemySpawnInterval)==0){
+  		newEnemy()
+      console.log("New enemy!")
+  	}
+  	if(time%spawnInterval==0){
+  		newAsteroid()
+  		//if(spawnTimer>spawnInterval){spawnTimer--}
+  	}
+  	if(pubSpawned){
+  		pubY+=4
+  		if(pubY>height+100){
+  			pubSpawned=false
+  			pubY=-100
+  			pubName=parseT("#pubName#")
+  		}
+  	}
 	}else{
 		if(!pubSpawned){
 			pubSpawned=true
 			pubY=-100;
+      pubTractorBeamSFX.loop()
+      pubBeamOn=true
 		}else{
 			//update pub
 			if(pubY<height/2){
 			  pubY++;
+        pubTractorBeamSFX.setVolume((pubY/(height/2))*pubTractorBeamSFXMax);
 			}
 		}
 	}
@@ -291,11 +364,11 @@ function draw(){
 	//draw trails
 	for(i=0;i<trails.length;i++){
 		trails[i].age++
-		agePerc=trails[i].age/trailAgeMax
-		fill(255,200,200,255*(1-agePerc))
-		trailRad=(1-agePerc)*trailSizeMax
+		agePerc=trails[i].age/pCosmetic.trailAgeMax
+		fill(pCosmetic.trailCol.levels[0],pCosmetic.trailCol.levels[1],pCosmetic.trailCol.levels[2],255*(1-agePerc))
+		trailRad=(1-agePerc)*pCosmetic.trailSizeMax
 		ellipse(trails[i].pos.x,trails[i].pos.y,trailRad,trailRad)
-		if(trails[i].age>trailAgeMax){
+		if(trails[i].age>pCosmetic.trailAgeMax){
 			trails.splice(i,1)
 			i--
 		}
@@ -309,18 +382,19 @@ dir=fullDir.clone().norm()
 
 	//if(touching && fullDir.length()>0 &&inControl){
   if(p.vel.length()>1 &&inControl){
-    if(time%trailInterval==0){
+    if(time%pCosmetic.trailInterval==0){
 
 			//alert(trails.length)
 			trailPos=p.pos.clone()
 			trailPos.x=trailPos.x-cos(pAng)*5
 			trailPos.y=trailPos.y-sin(pAng)*8
 			newTrail(trailPos)
+      trailSFX.play();
 		}
   }
     if(touching && fullDir.length()>0 &&inControl){
 		//speedVec=Victor(speed/fullDir.length,speed/fullDir.length)
-		speedVec=Victor(speed,speed)
+		speedVec=Victor(speed/(w/500),speed/(h/500))
 			//p.vel=dir.multiply(speedVec);
 			p.vel=fullDir.multiply(speedVec)
 		}
@@ -341,37 +415,45 @@ dir=fullDir.clone().norm()
 	if(p.pos.y<0){p.pos.y=0}
 	else if(p.pos.y>height){p.pos.y=height}
 
+
+  //check smartbomb
+  if(smartbombHappened){
+    checkAndDrawSmartbombExplosion()
+
+  }
+
 	//check colls
 	for(i=0;i<obs.length;i++){
+    obs[i].pos.add(obs[i].vel)
+    ob=obs[i]
+    destroy=false
+    fill(255)
+    for(j=0;j<obs.length;j++){
+    	  if(i!=j){
+    	  	  ob2=obs[j]
+    	  	  if(collideCircleCircle(ob2.pos.x,ob2.pos.y,ob2.r,ob.pos.x,ob.pos.y,ob.r)){
+    	           fill(0,0,255)
+    	           destroy=true
+    	           newExplosionCluster(ob.pos.clone(),ob.r*2)
+            }
 
-		obs[i].pos.add(obs[i].vel)
-	 ob=obs[i]
-	 destroy=false
-	 fill(255)
-	 for(j=0;j<obs.length;j++){
-	 	  if(i!=j){
-	 	  	  ob2=obs[j]
-	 	  	  if(collideCircleCircle(ob2.pos.x,ob2.pos.y,ob2.r,ob.pos.x,ob.pos.y,ob.r)){
-	 	fill(0,0,255)
-	 	destroy=true
-	 	newExplosionCluster(ob.pos.clone(),ob.r*2)
-	 }
+        }
+    }
+    //if(collideRectCircle(p.pos.x,p.pos.y,pCosmetic.w,pCosmetic.y, ob.pos.x,ob.pos.y, ob.r)){
+    if(collideCircleCircle(p.pos.x,p.pos.y,p.r,ob.pos.x,ob.pos.y,ob.r)){
+    fill(255,0,0)
+    if(smartbombActive){
 
-	 	  }
-	 	}	if(collideCircleCircle(p.pos.x,p.pos.y,p.r,ob.pos.x,ob.pos.y,ob.r)){
-	 	fill(255,0,0)
-	 	if(smartbombActive){
-
-      setOffSmartBomb()
-	 		break;
-	 	}else if(shieldActive){
-	 		shieldActive=false
-	 	}else{
-	 		takeDamage(ob.r)
-	 	}
-	 	newExplosionCluster(p.pos.clone(),ob.r*2)
-	 	destroy=true
-	 }
+    setOffSmartBomb()
+    	break;
+    }else if(shieldActive){
+    	shieldActive=false
+    }else{
+    	takeDamage(ob.r)
+    }
+    newExplosionCluster(p.pos.clone(),ob.r*2)
+    destroy=true
+  }
 
 	 //update enemies
 	for(j=0;j<enemies.length;j++){
@@ -420,6 +502,7 @@ dir=fullDir.clone().norm()
 					obPos=p.pos.clone().add(shootToTarget.norm().multiply(Victor(-30,-30)))
 					obVel=shootToTarget.norm().multiply(Victor(shootSpeed,shootSpeed))
 					newOb(obPos,obVel,10)
+          shootSFX.play()
 			}else{
 				stroke(0,255,0)
 			}
@@ -433,8 +516,9 @@ dir=fullDir.clone().norm()
 	translate(p.pos.x,p.pos.y)
 	//if(inControl){pAng=dir.angle()}
   pAng=p.vel.angle()
-  rotate(pAng)
-	rect(0,0,p.r,p.r*0.6)
+  rotate(pAng+PI/2)
+  fill(pCosmetic.shipCol1)
+	rect(0,0,pCosmetic.w,pCosmetic.h)
 	if(crashteroidActive){
 		fill(255,150,150,150)
 		ellipse(0,0,crashteroidRad,crashteroidRad)
@@ -448,7 +532,7 @@ dir=fullDir.clone().norm()
 	}
 
 
-	rotate(-pAng)
+	rotate(-pAng-PI/2)
 	translate(-p.pos.x,-p.pos.y)
 	if(touching){
 	fill(255,0,0)
@@ -462,8 +546,13 @@ dir=fullDir.clone().norm()
 	}
 
 
+  fill(255,255,255)
 
 	//update enemies
+
+  //check if should fade out enemy encounter music (if no enemies or player is dead)
+  checkIfEndBattleMusic()
+
 	shootTargetIdOld=shootTargetId
 	shootTargetId=null
 	shootToTarget=null
@@ -514,42 +603,48 @@ dir=fullDir.clone().norm()
 		noStroke()
 		beamHeight=(10*sin(0.1*time))+90
 		fill(0,255,0,100)
-		if(!inPub){
+		if(!inPub&&pubBeamOn){
 			rect(width/2,pubY,width,beamHeight)
-			}
+		}
 		fill(255)
 		rect(width-50,pubY,100,100)
 		fill(255,150,150)
 		textAlign(CENTER)
     textSize(10)
-		text(pubName,width-50,pubY,100,100)
+		text("The "+pubName,width-50,pubY,100,100)
 
 
     if(touchDevice){
        textSize(10)
     }else{
-      textSize(20)
+      textSize(16)
     }
 
 
-	if(!inPub && sectorTimer<=0 && !dead){	if(p.pos.y<pubY+50&&p.pos.y>pubY-50){
-		 inControl=false
+  	if(!inPub && sectorTimer<=0 && !dead){
+      if(p.pos.y<pubY+50&&p.pos.y>pubY-50){
+  		 inControl=false
 
-		 pubText=parseT("#[name:"+pubName+"]pubIntro#")
-			p.vel=Victor(0,0)
-			if(p.pos.x<width-25){
-			  p.pos.x+=w*(0.003)
-			}else{
-				inPub=true
-				refreshUpgrades()
-			}
-			if(pubY<height/2 && p.pos.y<pubY){
-					p.pos.y++
-			}else if(p.pos.y>pubY){
-        p.pos.y--
-      }
-		}
-	}
+  		 pubText=parseT("#[name:"+pubName+"]pubIntro#")
+  			p.vel=Victor(0,0)
+  			if(p.pos.x<width-25){
+  			  p.pos.x+=w*(0.003)
+  			}else{
+  				inPub=true
+          pubTractorBeamSFX.setVolume(0.0,1)
+          pubTractorBeamSFX.stop(1.1)
+          pubBG1SFX.setVolume(0.5,4)
+          pubBG1SFX.loop()
+          pubBeamOn=false
+  				refreshUpgrades()
+  			}
+  			if(pubY<height/2 && p.pos.y<pubY){
+  					p.pos.y++
+  			}else if(p.pos.y>pubY){
+          p.pos.y--
+        }
+  		}
+  	}
 	}
 
 
@@ -608,7 +703,7 @@ dir=fullDir.clone().norm()
     if(touchDevice){
        textSize(10)
     }else{
-      textSize(20)
+      textSize(14)
     }
 		text(pubText,10,10,width-20,optionsY-10)
 
@@ -642,7 +737,7 @@ dir=fullDir.clone().norm()
 
 			 box1Hit=collidePointRect(mouseX,mouseY,boxSize+gapX*2,optionsY+gapY,boxSize,boxSize)
 
-		if(box1Hit){
+		   if(box1Hit){
 			 	getUpgrade(1)
 			 }
 
@@ -664,10 +759,25 @@ dir=fullDir.clone().norm()
 	}
 
 	if(dead){
+    if(!died){
+      died=true
+      if(highscore<sector){
+        Cookies.set("highscore",sector)
+        newHighscore=true
+      }
+    }
 
 		textSize(40)
 		//textAlign(CENTER)
 		text("GAME OVER",10,height/2,width,height)
+
+    if(newHighscore){
+      text("NEW HIGHSCORE: "+sector,10,100,width,height)
+    }
+    else{
+      if(isNaN(highscore)){highscore=0}
+      text("CURRENT HIGHSCORE: "+highscore,10,100,width,height)
+    }
 
     if(touchDevice){
       retryString="TAP TO RETRY"

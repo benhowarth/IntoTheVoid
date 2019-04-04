@@ -11,15 +11,19 @@ no pursuit if skip?
 
 change smartbomb to replace shield
 
-implement enemy timers
+implement enemy timers x
 
-scale enemy timer and asteroid timer with level
+scale enemy timer and asteroid timer with level x
 
 different asteroid patterns (with color of bg??)
 
 retry x
 main menu
 
+MUTE BUTTON!
+
 
 fix no shader bg on mobile
 fix pub name in front of ui on mobile
+
+add highscore

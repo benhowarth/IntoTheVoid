@@ -46,7 +46,7 @@ function(){
 newPossibleUpgrade("skip","#skip# (+move to next sector)",
 function(){
 	sector++;
-	//pursuedInSector=false;
+	pursuedInSector=false;
 });
 
 newPossibleUpgrade("crash","#crash# (+enemies crash when near you)",
@@ -70,7 +70,7 @@ function(){
 	shootRad=shootRad+shootRadIncrement
 });
 
-newPossibleUpgrade("shootSpeed","#shootSpeed# (+shooting range)",
+newPossibleUpgrade("shootSpeed","#shootSpeed# (+bullet speed)",
 function(){
 	shootSpeed=shootSpeed+shootSpeedIncrement
 });
@@ -173,7 +173,7 @@ function getUpgrade(id){
 		p.vel=Victor(-10,0)
 		inControl=true
 		inPub=false
-		selectSFX.play()
+		if(!muted){selectSFX.play()}
 		pubBG1SFX.setVolume(0.0,2)
 		pubBG1SFX.stop(2.1)
 	}
@@ -197,7 +197,7 @@ function setOffSmartBomb(){
 	*/
 	smartbombActive=false
 	smartbombHappened=true
-	smartbombSFX.play()
+	if(!muted){smartbombSFX.play()}
 }
 
 function checkAndDrawSmartbombExplosion(){

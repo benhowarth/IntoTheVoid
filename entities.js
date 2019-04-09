@@ -66,7 +66,7 @@ class Enemy{
 		rectMode(CENTER)
 		fill(255,0,0)
 	if(this.pos.y>height){
-		warningSFX.play()
+		if(!muted){warningSFX.play()}
 		rect(this.pos.x,height-30,this.r*sin(time*0.3),this.r*sin(time*0.3))
 	}else{
 			//ellipse(this.pos.x,this.pos.y,this.r,this.r)
@@ -146,6 +146,12 @@ function newEnemy(){
 	enemies.push(new Enemy(Victor(2,1)))
 	if(enemies.length==1){
 		battleBG1SFX.setVolume(0.4,2)
-		battleBG1SFX.loop()
+		if(!muted){battleBG1SFX.loop()}
 	}
+}
+
+
+function killEnemy(id){
+		newExplosionCluster(enemies[id].pos,30)
+		enemies.splice(id,1)
 }

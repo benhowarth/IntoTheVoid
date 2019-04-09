@@ -1,3 +1,7 @@
+function inBox(x1,y1,x,y,w,h){
+  return (x1>x && x1<x+w && y1>y && y1<y+h);
+}
+
 //https://stackoverflow.com/questions/4817029/whats-the-best-way-to-detect-a-touch-screen-device-using-javascript/4819886#4819886
 function is_touch_device() {
   var prefixes = ' -webkit- -moz- -o- -ms- '.split(' ');
@@ -57,7 +61,9 @@ if(is_touch_device()){
 
   document.addEventListener("keydown",function(e){
     //console.log(e.key);
-    if(movementKeys[e.key]!=null){
+    if(e.key=="m"){
+      toggleMute();
+    }else if(movementKeys[e.key]!=null){
       //alert(e.key)
       if(inControl){
         movementKeys[e.key].active=true
@@ -98,6 +104,40 @@ function checkMovementKeys(){
 }
 
 
+
+muted=false;
+function toggleMute(){
+//toggle muted
+  muted=!muted
+  console.log("muted="+muted+"!");
+  //if need to stop all audio
+  if(muted){
+    //stop all sounds
+
+      trailSFX.stop()
+      warningSFX.stop()
+      shootSFX.stop()
+      explosionSFX.stop()
+      smartbombSFX.stop()
+      selectSFX.stop()
+      pubTractorBeamSFX.stop()
+      pubBG1SFX.stop()
+      battleBG1SFX.stop()
+
+      //bg hum start
+      ambientHumSFX.stop()
+  }else{
+    //if not muted
+    //start bg noise
+
+    if(!muted){ambientHumSFX.loop()}
+    if(pubSpawned && !inPub && pubY<height/2){
+      pubTractorBeamSFX.loop()
+    }else if(inPub){
+      pubBG1SFX.loop()
+    }
+  }
+}
 
 
 
@@ -176,6 +216,14 @@ function setup(){
 
   }
 
+  //set up mute button
+  touchingMuteButton=false;
+  muteButton={
+    x:10,
+    y:height-60,
+    w:50,
+    h:50
+  }
 
   noSmooth()
 	p.pos=Victor(width/2,height/2)
@@ -201,7 +249,7 @@ function setup(){
 	frameRate(60);
 	//speed=1;
   speed=(200)/(pCosmetic.h*pCosmetic.w)
-  console.log("speed",speed)
+  //console.log("speed",speed)
   speedMax=3;
   speedIncrement=0.5;
   speedVec=Victor(speed,speed)
@@ -304,7 +352,7 @@ function setup(){
   battleBG1SFX.setVolume(0.4)
 
   //bg hum start
-  ambientHumSFX.loop()
+  if(!muted){ambientHumSFX.loop()}
 }
 function draw(){
 	textFont(f1)
@@ -320,11 +368,21 @@ function draw(){
     checkMovementKeys();
 	}
 
+  //check mute button
+  if(!touchingMuteButton && touching && inBox(mouseX,mouseY,muteButton.x,muteButton.y,muteButton.w,muteButton.h)){
+    touchingMuteButton=true;
+    toggleMute();
+  }else if(!touching){
+    touchingMuteButton=false;
+  }
+
+
+
 	if(sectorTimer>0){
     //if((time%enemySpawnInterval)==0){console.log("enemy should spawn",pursuedInSector,enemies.length,enemyMax,enemies.length<enemyMax)}
   	if(pursuedInSector && enemies.length<enemyMax && (time%enemySpawnInterval)==0){
   		newEnemy()
-      console.log("New enemy!")
+      //console.log("New enemy!")
   	}
   	if(time%spawnInterval==0){
   		newAsteroid()
@@ -342,14 +400,17 @@ function draw(){
 		if(!pubSpawned){
 			pubSpawned=true
 			pubY=-100;
-      pubTractorBeamSFX.loop()
+      if(!muted){pubTractorBeamSFX.loop()}
       pubBeamOn=true
 		}else{
 			//update pub
 			if(pubY<height/2){
 			  pubY++;
-        pubTractorBeamSFX.setVolume((pubY/(height/2))*pubTractorBeamSFXMax);
-			}
+        if(!muted){pubTractorBeamSFX.setVolume((pubY/(height/2))*pubTractorBeamSFXMax);}
+        if(inPub){
+          p.y++;
+        }
+      }
 		}
 	}
 
@@ -360,6 +421,16 @@ function draw(){
   background(0)
 	drawBG()
 
+  rectMode(CORNER)
+  //draw mute button
+  if(muted){
+    fill(255,0,0,100)
+  }else{
+    fill(0,255,0,100)
+  }
+  rect(muteButton.x,muteButton.y,muteButton.w,muteButton.h)
+
+  rectMode(CENTER)
 	//fill(255)
 	//draw trails
 	for(i=0;i<trails.length;i++){
@@ -389,7 +460,7 @@ dir=fullDir.clone().norm()
 			trailPos.x=trailPos.x-cos(pAng)*5
 			trailPos.y=trailPos.y-sin(pAng)*8
 			newTrail(trailPos)
-      trailSFX.play();
+      if(!muted){trailSFX.play();}
 		}
   }
     if(touching && fullDir.length()>0 &&inControl){
@@ -463,7 +534,7 @@ dir=fullDir.clone().norm()
 			newExplosionCluster(enemies[j].pos.clone(),ob.r*2)
 			enemies[j].hp-=ob.r
 			if(enemies[j].hp<0){
-				enemies.splice(j,1)
+          killEnemy(j)
 				}
 			destroy=true
 			break;
@@ -502,7 +573,7 @@ dir=fullDir.clone().norm()
 					obPos=p.pos.clone().add(shootToTarget.norm().multiply(Victor(-30,-30)))
 					obVel=shootToTarget.norm().multiply(Victor(shootSpeed,shootSpeed))
 					newOb(obPos,obVel,10)
-          shootSFX.play()
+          if(!muted){shootSFX.play()}
 			}else{
 				stroke(0,255,0)
 			}
@@ -561,7 +632,7 @@ dir=fullDir.clone().norm()
 		enemies[i].update()
 		enemies[i].draw()
 		if(sectorTimer<0 && enemies[i].pos.y>height+40){
-			enemies.splice(i,1)
+      killEnemy(i)
 			i--
 		}
 
@@ -592,7 +663,7 @@ dir=fullDir.clone().norm()
 	 	newExplosionCluster(enemies[i].pos.clone(),enemies[i].dmg*3)
 			enemies[i].hp-=pDmg
 			if(enemies[i].hp<0){
-				enemies.splice(i,1)
+        killEnemy(i)
 				i--
 				}
 
@@ -634,7 +705,9 @@ dir=fullDir.clone().norm()
           pubTractorBeamSFX.setVolume(0.0,1)
           pubTractorBeamSFX.stop(1.1)
           pubBG1SFX.setVolume(0.5,4)
-          pubBG1SFX.loop()
+          if(!muted){
+            pubBG1SFX.loop()
+          }
           pubBeamOn=false
   				refreshUpgrades()
   			}
@@ -644,7 +717,9 @@ dir=fullDir.clone().norm()
           p.pos.y--
         }
   		}
-  	}
+  	}else if(!dead && inPub){
+      p.pos.y=pubY
+    }
 	}
 
 

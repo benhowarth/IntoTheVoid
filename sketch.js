@@ -6,6 +6,7 @@
 // a shader variable
 let uniformsShader;
 
+
 let bgDrawer;
 function preload(){
   // load the shader

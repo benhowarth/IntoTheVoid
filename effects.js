@@ -11,9 +11,9 @@ function newTrail(_pos){
 }
 
 
-explosionAgeMax=20
+explosionAgeMax=60
 explosionAgeStartMax=4
-explosionClusterSize=20
+explosionClusterSize=40
 explosionClusterMaxNo=6
 explosions=[]
 function newExplosion(_pos,_size){
@@ -27,7 +27,7 @@ function newExplosion(_pos,_size){
 }
 
 function newExplosionCluster(_pos,_size){
-	explosionSFX.play()
+	if(!muted){explosionSFX.play()}
 	clusterNo=(Math.random()*explosionClusterMaxNo)+1
 	clusterNo=explosionClusterMaxNo
 	for(ec=0;ec<clusterNo;ec++){
